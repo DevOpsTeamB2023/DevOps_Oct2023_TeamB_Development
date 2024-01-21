@@ -19,6 +19,34 @@ app.config['MYSQL_DB'] = 'record_db'
 mysql = MySQL(app)
 
 @app.route('/')
+@app.route('/login', methods =['GET', 'POST'])
+def login():
+    msg = ''
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM Account WHERE username = %s AND password = %s', (username, password))
+        account = cursor.fetchone()
+        if account:
+            if account['AccStatus'] == 'Created':
+                session['loggedin'] = True
+                session['id'] = account['AccID']
+                session['username'] = account['Username']
+                msg = 'Logged in successfully!'
+                return render_template('index.html', msg=msg)
+            elif account['AccStatus'] == 'Waiting for approval':
+                msg = 'Your Account has not been approved yet. Please try again later.'
+        else:
+            msg = 'Incorrect username or password!'
+    return render_template('login.html', msg=msg)
+
+@app.route('/logout')
+def logout():
+	session.pop('loggedin', None)
+	session.pop('id', None)
+	session.pop('username', None)
+	return redirect(url_for('login'))
 
 @app.route('/register', methods =['GET', 'POST'])
 def register():
