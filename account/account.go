@@ -41,11 +41,21 @@ func main() {
 	dB()
 
 	router := mux.NewRouter()
+	router.Use(corsMiddleware)
 	router.HandleFunc("/api/v1/accounts", createAccHandler).Methods("POST")
 	router.HandleFunc("/api/v1/accounts", getAccHandler).Methods("GET")
 
 	fmt.Println("Listening at port 5001")
 	log.Fatal(http.ListenAndServe(":5001", router))
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Api-Key, X-Requested-With, Content-Type, Accept, Authorization")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func createAccHandler(w http.ResponseWriter, r *http.Request) {
