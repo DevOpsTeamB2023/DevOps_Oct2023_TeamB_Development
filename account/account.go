@@ -46,6 +46,7 @@ func main() {
 	router.HandleFunc("/api/v1/accounts", getAccHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/all", listAllAccsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/approve", approveAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts", adminCreateAccHandler).Methods("POST")
 
 	fmt.Println("Listening at port 5001")
 	log.Fatal(http.ListenAndServe(":5001", router))
@@ -158,4 +159,30 @@ func approveAccHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, "Account approved successfully")
+}
+
+func adminCreateAccHandler(w http.ResponseWriter, r *http.Request) {
+	var newAcc Account
+	err := json.NewDecoder(r.Body).Decode(&newAcc)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Insert the new account into the database
+	stmt, err := db.Prepare("INSERT INTO Account (Username, Password, AccType, AccStatus) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(newAcc.Username, newAcc.Password, newAcc.AccType, newAcc.AccStatus)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "Account created successfully")
 }

@@ -246,9 +246,10 @@ func manageAccsMenu(acc *Account) {
 	var choice int
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\nManage Accounts:")
-	fmt.Println("1. Approve Pending User Accounts")
-	fmt.Println("2. Modify User Accounts")
-	fmt.Println("3. Delete User Accounts")
+	fmt.Println("1. Approve Pending User Account")
+	fmt.Println("2. Modify User Account")
+	fmt.Println("3. Delete User Account")
+	fmt.Println("4. Create User Account")
 	fmt.Println("0. Go Back")
 	reader.ReadString('\n')
 	fmt.Print("Enter an option: ")
@@ -267,6 +268,10 @@ func manageAccsMenu(acc *Account) {
 		//get accID and delete selected account
 		fmt.Println("----Delete Account----")
 		//deleteAcc()
+	case 4:
+		//set status as created since done by admin
+		fmt.Println("----Create Account----")
+		adminCreateAcc()
 	case 0:
 		// Go back
 	default:
@@ -299,4 +304,37 @@ func approveAcc() {
 	} else {
 		fmt.Println("Error creating request:", err)
 	}
+}
+
+// admin creates user acc
+func adminCreateAcc() {
+	var acc Account
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Username: ")
+	fmt.Scanf("%v", &acc.Username)
+	reader.ReadString('\n')
+	fmt.Print("Enter Password: ")
+	fmt.Scanf("%v", &acc.Password)
+
+	acc.AccType = "User"
+	acc.AccStatus = "Created"
+
+	postBody, _ := json.Marshal(acc)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5001/api/v1/accounts", bytes.NewBuffer(postBody)); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if res.StatusCode == 201 {
+				fmt.Println("User account created successfully.")
+			} else {
+				fmt.Println("Error creating user account")
+			}
+		} else {
+			fmt.Println(2, err)
+		}
+	} else {
+		fmt.Println(3, err)
+	}
+
 }
