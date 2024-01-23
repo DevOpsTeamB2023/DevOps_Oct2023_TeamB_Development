@@ -263,11 +263,11 @@ func manageAccsMenu(acc *Account) {
 	case 2:
 		//get accID and allow modifications to acc details based on selected accID
 		fmt.Println("----Modify Account----")
-		//editAcc()
+		editAcc()
 	case 3:
 		//get accID and delete selected account
 		fmt.Println("----Delete Account----")
-		//deleteAcc()
+		deleteAcc()
 	case 4:
 		//set status as created since done by admin
 		fmt.Println("----Create Account----")
@@ -337,4 +337,63 @@ func adminCreateAcc() {
 		fmt.Println(3, err)
 	}
 
+}
+
+func deleteAcc() {
+	var accID int
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Account ID to delete: ")
+	fmt.Scanf("%d", &accID)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://localhost:5001/api/v1/accounts/delete?accID=%d", accID), nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+
+			if res.StatusCode == http.StatusOK {
+				fmt.Println("Account deleted successfully")
+			} else {
+				fmt.Println("Error deleting account")
+			}
+		} else {
+			fmt.Println("Error making request:", err)
+		}
+	} else {
+		fmt.Println("Error creating request:", err)
+	}
+}
+
+func editAcc() {
+	var accID int
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Account ID to edit: ")
+	fmt.Scanf("%d", &accID)
+
+	// Request updated information from the user
+	var updatedAcc Account
+	reader.ReadString('\n')
+	fmt.Print("Enter updated Username: ")
+	fmt.Scanf("%v", &updatedAcc.Username)
+	reader.ReadString('\n')
+	fmt.Print("Enter updated AccType (User, Admin): ")
+	fmt.Scanf("%v", &updatedAcc.AccType)
+
+	// Perform the update by making a PUT request to the API
+	postBody, _ := json.Marshal(updatedAcc)
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:5001/api/v1/accounts/%d", accID), bytes.NewBuffer(postBody)); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if res.StatusCode == http.StatusAccepted {
+				fmt.Println("Profile updated successfully!")
+			} else {
+				fmt.Println("Error updating profile")
+			}
+		} else {
+			fmt.Println("Error making request", err)
+		}
+	} else {
+		fmt.Println("Error creating request", err)
+	}
 }

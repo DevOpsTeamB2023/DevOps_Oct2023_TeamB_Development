@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -47,6 +48,8 @@ func main() {
 	router.HandleFunc("/api/v1/accounts/all", listAllAccsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/approve", approveAccHandler).Methods("POST")
 	router.HandleFunc("/api/v1/accounts", adminCreateAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts/delete", deleteAccHandler).Methods("DELETE")
+	router.HandleFunc("/api/v1/accounts/{accID}", updateAccHandler).Methods("PUT")
 
 	fmt.Println("Listening at port 5001")
 	log.Fatal(http.ListenAndServe(":5001", router))
@@ -185,4 +188,64 @@ func adminCreateAccHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintln(w, "Account created successfully")
+}
+
+func deleteAccHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the account ID from the request parameters
+	accID := r.URL.Query().Get("accID")
+	if accID == "" {
+		http.Error(w, "Account ID parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	// Delete the account from the database
+	stmt, err := db.Prepare("DELETE FROM Account WHERE AccID = ?")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(accID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Account deleted successfully")
+}
+
+func updateAccHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the user ID from the request URL
+	vars := mux.Vars(r)
+	accID, err := strconv.Atoi(vars["accID"])
+	if err != nil {
+		http.Error(w, "Invalid Account ID", http.StatusBadRequest)
+		return
+	}
+
+	var updatedAcc Account
+	err = json.NewDecoder(r.Body).Decode(&updatedAcc)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Update the user's information in the database
+	stmt, err := db.Prepare("UPDATE Account SET Username=?, AccType=? WHERE AccID=?")
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(updatedAcc.Username, updatedAcc.AccType, accID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintln(w, "Account updated successfully!")
 }
