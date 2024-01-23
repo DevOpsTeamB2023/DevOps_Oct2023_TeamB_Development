@@ -42,6 +42,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/accounts", createAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts", getAccHandler).Methods("GET")
 
 	fmt.Println("Listening at port 5001")
 	log.Fatal(http.ListenAndServe(":5001", router))
@@ -71,4 +72,28 @@ func createAccHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintln(w, "Account created successfully")
+}
+
+func getAccHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("username")
+	password := r.URL.Query().Get("password")
+
+	if username == "" || password == "" {
+		http.Error(w, "Username and Password parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	var acc Account
+	err := db.QueryRow("SELECT AccID, Username, Password, AccType, AccStatus FROM Account WHERE Username = ? AND Password = ?", username, password).Scan(&acc.AccID, &acc.Username, &acc.Password, &acc.AccType, &acc.AccStatus)
+	if err == sql.ErrNoRows {
+		http.Error(w, "Invalid Username or Password", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with user information
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(acc)
 }
