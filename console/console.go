@@ -198,15 +198,105 @@ func adminMainMenu(acc *Account) {
 		case 1:
 			// List all user accounts
 			fmt.Println("----All User Accounts----")
-			//listUserAccs(acc)
+			listAllAccs()
+			manageAccsMenu(acc)
 		case 2:
 			// List all capstone entries
 			fmt.Println("----All Capstone Entries----")
-			//listEntries(user)
+			//listAllEntries(user)
 		case 0:
 			os.Exit(0)
 		default:
 			fmt.Println("Invalid option")
 		}
+	}
+}
+
+func listAllAccs() error {
+	// Perform list all users request
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodGet, "http://localhost:5001/api/v1/accounts/all", nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+
+			if res.StatusCode == http.StatusOK {
+				var accs []Account
+				err := json.NewDecoder(res.Body).Decode(&accs)
+				if err == nil {
+					fmt.Println("List of all users:")
+					for _, acc := range accs {
+						fmt.Printf("Account ID: %d \nUsername: %s \nAccount Type: %s \nAccount Status: %s\n\n", acc.AccID, acc.Username, acc.AccType, acc.AccStatus)
+					}
+					return nil
+				} else {
+					return fmt.Errorf("Error decoding response: %v", err)
+				}
+			} else {
+				return fmt.Errorf("Error fetching user list")
+			}
+		} else {
+			return fmt.Errorf("Error making request: %v", err)
+		}
+	} else {
+		return fmt.Errorf("Error creating request: %v", err)
+	}
+}
+
+func manageAccsMenu(acc *Account) {
+	var choice int
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("\nManage Accounts:")
+	fmt.Println("1. Approve Pending User Accounts")
+	fmt.Println("2. Modify User Accounts")
+	fmt.Println("3. Delete User Accounts")
+	fmt.Println("0. Go Back")
+	reader.ReadString('\n')
+	fmt.Print("Enter an option: ")
+	fmt.Scanf("%d", &choice)
+
+	switch choice {
+	case 1:
+		//get accID and update accStatus based on selected accID
+		fmt.Println("----Approve Account----")
+		approveAcc()
+	case 2:
+		//get accID and allow modifications to acc details based on selected accID
+		fmt.Println("----Modify Account----")
+		//editAcc()
+	case 3:
+		//get accID and delete selected account
+		fmt.Println("----Delete Account----")
+		//deleteAcc()
+	case 0:
+		// Go back
+	default:
+		fmt.Println("Invalid option")
+	}
+}
+
+func approveAcc() {
+	var accID int
+
+	reader := bufio.NewReader(os.Stdin)
+
+	reader.ReadString('\n')
+	fmt.Print("Enter Account ID to approve: ")
+	fmt.Scanf("%d", &accID)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:5001/api/v1/accounts/approve?accID=%d", accID), nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+
+			if res.StatusCode == http.StatusOK {
+				fmt.Println("Account approved successfully")
+			} else {
+				fmt.Println("Error approving account")
+			}
+		} else {
+			fmt.Println("Error making request:", err)
+		}
+	} else {
+		fmt.Println("Error creating request:", err)
 	}
 }
