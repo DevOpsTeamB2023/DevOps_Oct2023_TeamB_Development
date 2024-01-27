@@ -21,3 +21,21 @@ VALUES(1001, 'Shaniah', 'adminpwd1', 'Admin', 'Created'),
 (2997, 'testupdate', 'updatetestpwd', 'User', 'Created');
 
 SELECT * FROM `Account`;
+
+CREATE TABLE IF NOT EXISTS `Record` (
+`RecordID` int NOT NULL AUTO_INCREMENT,
+`Name` varchar (50) NOT NULL,
+`RoleOfContact` ENUM('Staff', 'Student'),
+`NoOfStudents` int NOT NULL,
+`AcadYr` varchar (10) NOT NULL,
+`CapstoneTitle` varchar (50) NOT NULL,
+`CompanyName` varchar (50) NOT NULL,
+`CompanyContact` varchar (50) NOT NULL,
+`ProjDesc` varchar (1000) NOT NULL,
+PRIMARY KEY (`RecordID`)
+)AUTO_INCREMENT=1;
+
+INSERT INTO `Record` (`RecordID`, `Name`, `RoleOfContact`, `NoOfStudents`, `AcadYr`, `CapstoneTitle`, `CompanyName`, `CompanyContact`, `ProjDesc`)
+VALUES(1, 'Zi Yi', 'Staff', 4, '2021/2022', 'Poverty Monitoring System', 'Shaniah Corporation', 'Koay YT', 'In the contemporary era, the intersection of virtual economies and real-world socio-economic issues has become increasingly relevant. This project aims to explore the correlation between spending patterns in the virtual world, specifically within the critically acclaimed MMORPG Final Fantasy XIV (With an expanded free trial which you can play through the entirety of A Realm Reborn and the award-winning Stormblood expansion up to level 70 for free with no restrictions on playtime?!!), and real-world poverty indicators (me).');
+
+SELECT * FROM `Record`

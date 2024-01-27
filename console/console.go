@@ -3,6 +3,8 @@
 package main
 
 import (
+	"DevOps_Oct2023_TeamB_Development/microservices/account"
+	"DevOps_Oct2023_TeamB_Development/microservices/record"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -19,7 +21,21 @@ type Account struct {
 	AccStatus string `json:"accStatus"`
 }
 
+type Record struct {
+	RecordID       int    `json:"recordId"`
+	Name           string `json:"name"`
+	RoleOfContact  string `json:"roleOfContact"`
+	NoOfStudents   int    `json:"noOfStudents"`
+	AcadYr         string `json:"acadYr"`
+	CapstoneTitle  string `json:"capstoneTitle"`
+	CompanyName    string `json:"companyName"`
+	CompanyContact string `json:"companyContact"`
+	ProjDesc       string `json:"projDesc"`
+}
+
 func main() {
+	account.InitHTTPServer()
+	record.InitHTTPServer()
 outer:
 	for {
 		fmt.Println("===============================================")
@@ -180,6 +196,7 @@ func userMainMenu(acc *Account) {
 	}
 }
 
+// main page after logging in as admin
 func adminMainMenu(acc *Account) {
 	for {
 		var choice int
@@ -199,11 +216,12 @@ func adminMainMenu(acc *Account) {
 			// List all user accounts
 			fmt.Println("----All User Accounts----")
 			listAllAccs()
-			manageAccsMenu(acc)
+			manageAccsMenu()
 		case 2:
 			// List all capstone entries
 			fmt.Println("----All Capstone Entries----")
-			//listAllEntries(user)
+			listAllRecords()
+			manageRecordsMenu()
 		case 0:
 			os.Exit(0)
 		default:
@@ -212,6 +230,7 @@ func adminMainMenu(acc *Account) {
 	}
 }
 
+// admin account functions
 func listAllAccs() error {
 	// Perform list all users request
 	client := &http.Client{}
@@ -242,7 +261,7 @@ func listAllAccs() error {
 	}
 }
 
-func manageAccsMenu(acc *Account) {
+func manageAccsMenu() {
 	var choice int
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\nManage Accounts:")
@@ -395,5 +414,239 @@ func editAcc() {
 		}
 	} else {
 		fmt.Println("Error creating request", err)
+	}
+}
+
+//admin capstone entry/records functions
+
+// list all capstone entries
+func listAllRecords() error {
+	// Perform list all capstone entries
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodGet, "http://localhost:5002/api/v1/records/all", nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+			if res.StatusCode == http.StatusOK {
+				fmt.Printf("ok")
+				var records []Record
+				err := json.NewDecoder(res.Body).Decode(&records)
+				if err == nil {
+					fmt.Println("List of all Capstone Entries:")
+					for _, record := range records {
+						fmt.Printf("Record ID: %d \nName: %s \nRole of Contact: %s \nNo of Students: %d \nAcadamic Year: %s\nCapstone Title: %s \nCompany Name: %s \nCompany Contact: %s \nProject Desc: %s\n\n", record.RecordID, record.Name, record.RoleOfContact, record.NoOfStudents, record.AcadYr, record.CapstoneTitle, record.CompanyName, record.CompanyContact, record.ProjDesc)
+					}
+					return nil
+				} else {
+					return fmt.Errorf("Error decoding response: %v", err)
+				}
+			} else {
+				return fmt.Errorf("Error fetching user list")
+			}
+		} else {
+			return fmt.Errorf("Error making request: %v", err)
+		}
+	} else {
+		return fmt.Errorf("Error creating request: %v", err)
+	}
+}
+
+// manage record menu
+func manageRecordsMenu() {
+	var choice int
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("\nManage Records:")
+	fmt.Println("1. Create Record")
+	fmt.Println("2. Modify Record")
+	fmt.Println("3. Delete Record")
+	fmt.Println("4. Query Record by Academic Year")
+	fmt.Println("5. Query Record by Keyword")
+	fmt.Println("0. Go Back")
+	reader.ReadString('\n')
+	fmt.Print("Enter an option: ")
+	fmt.Scanf("%d", &choice)
+
+	switch choice {
+	case 1:
+		//post new record
+		fmt.Println("----Create Record----")
+		adminCreateRecord()
+	case 2:
+		//get recordID and allow modifications to acc details based on selected recordID
+		fmt.Println("----Modify Record----")
+		editRecord()
+	case 3:
+		//get recordID and delete selected account
+		fmt.Println("----Delete Record----")
+		deleteRecord()
+	case 4:
+		//search for record by academic year or keyword/capstone title
+		fmt.Println("----Query Record----")
+		queryRecordByKeyword()
+	case 0:
+		// Go back
+	default:
+		fmt.Println("Invalid option")
+	}
+}
+
+// admin create new capstone entry
+func adminCreateRecord() {
+	var record Record
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Name: ")
+	fmt.Scanf("%v", &record.Name)
+	reader.ReadString('\n')
+	fmt.Print("Enter Role of Contact (Staff or Student): ")
+	fmt.Scanf("%v", &record.RoleOfContact)
+	reader.ReadString('\n')
+	fmt.Print("Enter Number of Students: ")
+	fmt.Scanf("%d", &record.NoOfStudents)
+	reader.ReadString('\n')
+	fmt.Print("Enter Academic Year: ")
+	fmt.Scanf("%v", &record.AcadYr)
+	reader.ReadString('\n')
+	fmt.Print("Enter Capstone Title: ")
+	fmt.Scanf("%v", &record.CapstoneTitle)
+	reader.ReadString('\n')
+	fmt.Print("Enter Name of Company: ")
+	fmt.Scanf("%v", &record.CompanyName)
+	reader.ReadString('\n')
+	fmt.Print("Enter Company Point of Contact: ")
+	fmt.Scanf("%v", &record.CompanyContact)
+	reader.ReadString('\n')
+	fmt.Print("Enter Brief Description of the Project: ")
+	fmt.Scanf("%v", &record.ProjDesc)
+
+	postBody, _ := json.Marshal(record)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPost, "http://localhost:5002/api/v1/records", bytes.NewBuffer(postBody)); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if res.StatusCode == 201 {
+				fmt.Println("Capstone Entry created successfully.")
+			} else {
+				fmt.Println("Error creating new entry")
+			}
+		} else {
+			fmt.Println(2, err)
+		}
+	} else {
+		fmt.Println(3, err)
+	}
+
+}
+
+// delete capstone record
+func deleteRecord() {
+	var recordID int
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Record ID to delete: ")
+	fmt.Scanf("%d", &recordID)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://localhost:5002/api/v1/records/delete?recordID=%d", recordID), nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+
+			if res.StatusCode == http.StatusOK {
+				fmt.Println("Record deleted successfully")
+			} else {
+				fmt.Println("Error deleting capstone entry")
+			}
+		} else {
+			fmt.Println("Error making request:", err)
+		}
+	} else {
+		fmt.Println("Error creating request:", err)
+	}
+}
+
+// edit capstone entry
+func editRecord() {
+	var recordID int
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Record ID to edit: ")
+	fmt.Scanf("%d", &recordID)
+
+	// Request updated information from the user
+	var updatedrecord Record
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Name: ")
+	fmt.Scanf("%v", &updatedrecord.Name)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Role of Contact (Staff or Student): ")
+	fmt.Scanf("%v", &updatedrecord.RoleOfContact)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Number of Students: ")
+	fmt.Scanf("%d", &updatedrecord.NoOfStudents)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Academic Year: ")
+	fmt.Scanf("%v", &updatedrecord.AcadYr)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Capstone Title: ")
+	fmt.Scanf("%v", &updatedrecord.CapstoneTitle)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Name of Company: ")
+	fmt.Scanf("%v", &updatedrecord.CompanyName)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Company Point of Contact: ")
+	fmt.Scanf("%v", &updatedrecord.CompanyContact)
+	reader.ReadString('\n')
+	fmt.Print("Enter Updated Brief Description of the Project: ")
+	fmt.Scanf("%v", &updatedrecord.ProjDesc)
+
+	// Perform the update by making a PUT request to the API
+	postBody, _ := json.Marshal(updatedrecord)
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:5002/api/v1/records/%d", recordID), bytes.NewBuffer(postBody)); err == nil {
+		if res, err := client.Do(req); err == nil {
+			if res.StatusCode == http.StatusAccepted {
+				fmt.Println("Capstone entry updated successfully!")
+			} else {
+				fmt.Println("Error updating capstone entry")
+			}
+		} else {
+			fmt.Println("Error making request", err)
+		}
+	} else {
+		fmt.Println("Error creating request", err)
+	}
+}
+
+// search for capstone entry based on academic year or keyword/capstone title
+func queryRecordByKeyword() {
+	var query string
+	reader := bufio.NewReader(os.Stdin)
+	reader.ReadString('\n')
+	fmt.Print("Enter Query (Year or Capstone Title): ")
+	fmt.Scanf("%s", &query)
+
+	client := &http.Client{}
+	if req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:5002/api/v1/records/search?query=%s", query), nil); err == nil {
+		if res, err := client.Do(req); err == nil {
+			defer res.Body.Close()
+
+			if res.StatusCode == http.StatusOK {
+				var searchResults []Record
+				err := json.NewDecoder(res.Body).Decode(&searchResults)
+				if err == nil {
+					fmt.Println("Search Results:")
+					for _, record := range searchResults {
+						fmt.Printf("Record ID: %d \nName: %s \nRole of Contact: %s \nNo of Students: %d \nAcadamic Year: %s\nCapstone Title: %s \nCompany Name: %s \nCompany Contact: %s \nProject Desc: %s\n\n", record.RecordID, record.Name, record.RoleOfContact, record.NoOfStudents, record.AcadYr, record.CapstoneTitle, record.CompanyName, record.CompanyContact, record.ProjDesc)
+					}
+				} else {
+					fmt.Println("Error decoding response:", err)
+				}
+			} else {
+				fmt.Println("No Records found")
+			}
+		} else {
+			fmt.Println("Error making request:", err)
+		}
+	} else {
+		fmt.Println("Error creating request:", err)
 	}
 }

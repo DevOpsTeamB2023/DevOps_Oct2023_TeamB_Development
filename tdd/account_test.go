@@ -2,7 +2,7 @@
 package account_test
 
 import (
-	"DevOps_Oct2023_TeamB_Development/account"
+	"DevOps_Oct2023_TeamB_Development/microservices/account"
 	"bytes"
 	"encoding/json"
 	"fmt"

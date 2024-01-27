@@ -38,7 +38,7 @@ func DB() {
 	fmt.Println("Connected to the database")
 }
 
-func main() {
+func InitHTTPServer() {
 	DB()
 
 	router := mux.NewRouter()
@@ -52,7 +52,9 @@ func main() {
 	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler).Methods("PUT")
 
 	fmt.Println("Listening at port 5001")
-	log.Fatal(http.ListenAndServe(":5001", router))
+	go func() {
+		log.Fatal(http.ListenAndServe(":5001", router))
+	}()
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
