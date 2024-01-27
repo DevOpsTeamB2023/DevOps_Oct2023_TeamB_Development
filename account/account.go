@@ -1,4 +1,4 @@
-package main
+package account
 
 import (
 	"database/sql"
@@ -25,7 +25,7 @@ var (
 	err error
 )
 
-func dB() {
+func DB() {
 	db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
 	if err != nil {
 		log.Fatal(err)
@@ -39,17 +39,17 @@ func dB() {
 }
 
 func main() {
-	dB()
+	DB()
 
 	router := mux.NewRouter()
 	router.Use(corsMiddleware)
-	router.HandleFunc("/api/v1/accounts", createAccHandler).Methods("POST")
-	router.HandleFunc("/api/v1/accounts", getAccHandler).Methods("GET")
-	router.HandleFunc("/api/v1/accounts/all", listAllAccsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/accounts/approve", approveAccHandler).Methods("POST")
-	router.HandleFunc("/api/v1/accounts", adminCreateAccHandler).Methods("POST")
-	router.HandleFunc("/api/v1/accounts/delete", deleteAccHandler).Methods("DELETE")
-	router.HandleFunc("/api/v1/accounts/{accID}", updateAccHandler).Methods("PUT")
+	router.HandleFunc("/api/v1/accounts", CreateAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts", GetAccHandler).Methods("GET")
+	router.HandleFunc("/api/v1/accounts/all", ListAllAccsHandler).Methods("GET")
+	router.HandleFunc("/api/v1/accounts/approve", ApproveAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts", AdminCreateAccHandler).Methods("POST")
+	router.HandleFunc("/api/v1/accounts/delete", DeleteAccHandler).Methods("DELETE")
+	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler).Methods("PUT")
 
 	fmt.Println("Listening at port 5001")
 	log.Fatal(http.ListenAndServe(":5001", router))
@@ -64,7 +64,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func createAccHandler(w http.ResponseWriter, r *http.Request) {
+func CreateAccHandler(w http.ResponseWriter, r *http.Request) {
 	var newAcc Account
 	err := json.NewDecoder(r.Body).Decode(&newAcc)
 	if err != nil {
@@ -90,7 +90,7 @@ func createAccHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Account created successfully")
 }
 
-func getAccHandler(w http.ResponseWriter, r *http.Request) {
+func GetAccHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	password := r.URL.Query().Get("password")
 
@@ -114,7 +114,7 @@ func getAccHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(acc)
 }
 
-func listAllAccsHandler(w http.ResponseWriter, r *http.Request) {
+func ListAllAccsHandler(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT AccID, Username, AccType, AccStatus FROM Account")
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -138,7 +138,7 @@ func listAllAccsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(accs)
 }
 
-func approveAccHandler(w http.ResponseWriter, r *http.Request) {
+func ApproveAccHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the account ID from the request parameters
 	accID := r.URL.Query().Get("accID")
 	if accID == "" {
@@ -164,7 +164,7 @@ func approveAccHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Account approved successfully")
 }
 
-func adminCreateAccHandler(w http.ResponseWriter, r *http.Request) {
+func AdminCreateAccHandler(w http.ResponseWriter, r *http.Request) {
 	var newAcc Account
 	err := json.NewDecoder(r.Body).Decode(&newAcc)
 	if err != nil {
@@ -190,7 +190,7 @@ func adminCreateAccHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Account created successfully")
 }
 
-func deleteAccHandler(w http.ResponseWriter, r *http.Request) {
+func DeleteAccHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the account ID from the request parameters
 	accID := r.URL.Query().Get("accID")
 	if accID == "" {
@@ -216,7 +216,7 @@ func deleteAccHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Account deleted successfully")
 }
 
-func updateAccHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateAccHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the user ID from the request URL
 	vars := mux.Vars(r)
 	accID, err := strconv.Atoi(vars["accID"])
