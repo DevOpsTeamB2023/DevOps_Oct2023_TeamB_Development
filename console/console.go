@@ -1,6 +1,6 @@
 //developing using console first before changing to html
 
-package main
+package account
 
 import (
 	"bufio"

@@ -15,6 +15,9 @@ PRIMARY KEY (`AccID`)
 
 INSERT INTO `Account` (`AccID`, `Username`, `Password`, `AccType`, `AccStatus`)
 VALUES(1001, 'Shaniah', 'adminpwd1', 'Admin', 'Created'),
-(2001, 'ziyi', 'userpwd1', 'User', 'Created');
+(2001, 'ziyi', 'userpwd1', 'User', 'Created'),
+(2999, 'testdelete', 'deletetestpwd', 'User', 'Created'),
+(2998, 'testapprove', 'approvetestpwd', 'User', 'Pending'),
+(2997, 'testupdate', 'updatetestpwd', 'User', 'Created');
 
 SELECT * FROM `Account`;
