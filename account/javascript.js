@@ -1,11 +1,11 @@
 function signup(){
     var request = new XMLHttpRequest();
-    const form = document.getElementById('signup_form');
+    const form = document.getElementById('signupForm');
 
     const curl = 'http://localhost:5001/api/v1/accounts';
 
-    const username = form.elements['username'].value;
-    const password = form.elements['password'].value;
+    const username = form.elements['signup_username'].value;
+    const password = form.elements['signup_password'].value;
     console.log(username);
     console.log(password);
 
@@ -22,9 +22,33 @@ function signup(){
     return false //prevent default submission
 }
 
-// function deleteAccount(email){
-//     var request = new XMLHttpRequest();
-//     console.log(screen)
-//     request.open('DELETE', 'http://localhost:1765/api/v1/book/'+email);
-//     request.send();
-// }
+function login(){
+    var request = new XMLHttpRequest();
+    const form = document.getElementById('loginForm');
+    const username = form.elements['login_username'].value;
+    const password = form.elements['login_password'].value;
+    console.log(username);
+    console.log(password);
+
+    const curl = 'http://localhost:5001/api/v1/accounts?username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password);
+    console.log(curl);
+
+    request.open("GET", curl);
+    request.onreadystatechange = function() {
+      if (request.readyState === 4) {
+        if (request.status === 200) {
+          // Successful login, redirect to main page
+          location.href = "index.html";
+        } else if (request.status === 401) {
+          // Login failed, handle error
+          form.reset();
+          document.getElementById('error-message').innerHTML = 'Incorrect Phone Number or Password.';
+        } else {
+          // Handle other status codes or network errors
+          document.getElementById('error-message').innerHTML = 'An error occurred. Please try again later.';
+        }
+      }
+    };
+    request.send();
+    return false
+}
