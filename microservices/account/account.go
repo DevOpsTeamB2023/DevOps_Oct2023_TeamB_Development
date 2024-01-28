@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -42,28 +43,23 @@ func InitHTTPServer() {
 	DB()
 
 	router := mux.NewRouter()
-	router.Use(corsMiddleware)
 	router.HandleFunc("/api/v1/accounts", CreateAccHandler).Methods("POST")
 	router.HandleFunc("/api/v1/accounts", GetAccHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/all", ListAllAccsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/approve", ApproveAccHandler).Methods("POST")
 	router.HandleFunc("/api/v1/accounts", AdminCreateAccHandler).Methods("POST")
 	router.HandleFunc("/api/v1/accounts/delete", DeleteAccHandler).Methods("DELETE")
+	router.HandleFunc("/api/v1/accounts/get", GetSpecificAccHandler).Methods("GET")
 	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler).Methods("PUT")
 
 	fmt.Println("Listening at port 5001")
-	go func() {
-		log.Fatal(http.ListenAndServe(":5001", router))
-	}()
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Api-Key, X-Requested-With, Content-Type, Accept, Authorization")
-		next.ServeHTTP(w, r)
-	})
+	http.ListenAndServe(":5001",
+		handlers.CORS(
+			handlers.AllowedOrigins([]string{"*"}),
+			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}),
+			handlers.AllowedHeaders([]string{"Origin", "X-Api-Key", "X-Requested-With", "Content-Type", "Accept", "Authorization"}),
+			handlers.AllowCredentials(),
+		)(router))
 }
 
 func CreateAccHandler(w http.ResponseWriter, r *http.Request) {
@@ -216,6 +212,19 @@ func DeleteAccHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, "Account deleted successfully")
+}
+
+func GetSpecificAccHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the account ID from the request parameters
+	accID := r.URL.Query().Get("accID")
+
+	// get the account from the database
+	var acc Account
+	db.QueryRow("Select * FROM Account WHERE AccID = ?", accID).Scan(&acc.AccID, &acc.Username, &acc.Password, &acc.AccType, &acc.AccStatus)
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Println(acc)
+	json.NewEncoder(w).Encode(acc)
 }
 
 func UpdateAccHandler(w http.ResponseWriter, r *http.Request) {
