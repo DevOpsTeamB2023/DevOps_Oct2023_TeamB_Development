@@ -64,9 +64,9 @@ outer:
 			//after login display user main menu
 			if acc.AccStatus == "Created" {
 				if acc.AccType == "User" {
-					userMainMenu(acc)
+					userMainMenu()
 				} else {
-					adminMainMenu(acc)
+					adminMainMenu()
 				}
 			} else {
 				fmt.Println("Your account has not been approved yet. Please try again later.")
@@ -154,14 +154,17 @@ func login() (*Account, error) {
 	}
 }
 
-func userMainMenu(acc *Account) {
+// user features - main menu selection
+func userMainMenu() {
 	for {
 		var choice int
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Println("===============================================")
 		fmt.Println("--------------User Main Menu-------------")
-		//list all of the user's own capstone entry
-		fmt.Println("1. Create a Capstone Entry")
+		// list all capstone entries
+		listAllRecords()
+		// feature selection
+		fmt.Println("\n1. Create a Capstone Entry")
 		fmt.Println("2. Search") //search based on acad year and/or keywords -> displays project title and name of person in charge
 		fmt.Println("3. Edit Capstone Entry")
 		fmt.Println("4. Delete Capstone Entry")
@@ -175,19 +178,19 @@ func userMainMenu(acc *Account) {
 		case 1:
 			// Create a capstone entry
 			fmt.Println("----Create Capstone Entry----")
-			//createEntry(acc)
+			createRecord()
 		case 2:
 			// Search
 			fmt.Println("----Search----")
-			//searchEntry(acc)
+			queryRecord()
 		case 3:
 			// Edit capstone entry
 			fmt.Println("----Edit Capstone Entry----")
-			//editEntry(acc)
+			editRecord()
 		case 4:
 			// Delete capstone entry
 			fmt.Println("----Delete Capstone Entry----")
-			//deleteEntry(acc)
+			deleteRecord()
 		case 0:
 			os.Exit(0)
 		default:
@@ -197,7 +200,7 @@ func userMainMenu(acc *Account) {
 }
 
 // main page after logging in as admin
-func adminMainMenu(acc *Account) {
+func adminMainMenu() {
 	for {
 		var choice int
 		reader := bufio.NewReader(os.Stdin)
@@ -427,13 +430,12 @@ func listAllRecords() error {
 		if res, err := client.Do(req); err == nil {
 			defer res.Body.Close()
 			if res.StatusCode == http.StatusOK {
-				fmt.Printf("ok")
 				var records []Record
 				err := json.NewDecoder(res.Body).Decode(&records)
 				if err == nil {
 					fmt.Println("List of all Capstone Entries:")
 					for _, record := range records {
-						fmt.Printf("Record ID: %d \nName: %s \nRole of Contact: %s \nNo of Students: %d \nAcadamic Year: %s\nCapstone Title: %s \nCompany Name: %s \nCompany Contact: %s \nProject Desc: %s\n\n", record.RecordID, record.Name, record.RoleOfContact, record.NoOfStudents, record.AcadYr, record.CapstoneTitle, record.CompanyName, record.CompanyContact, record.ProjDesc)
+						fmt.Printf("\nRecord ID: %d \nName: %s \nRole of Contact: %s \nNo of Students: %d \nAcadamic Year: %s\nCapstone Title: %s \nCompany Name: %s \nCompany Contact: %s \nProject Desc: %s\n\n", record.RecordID, record.Name, record.RoleOfContact, record.NoOfStudents, record.AcadYr, record.CapstoneTitle, record.CompanyName, record.CompanyContact, record.ProjDesc)
 					}
 					return nil
 				} else {
@@ -469,7 +471,7 @@ func manageRecordsMenu() {
 	case 1:
 		//post new record
 		fmt.Println("----Create Record----")
-		adminCreateRecord()
+		createRecord()
 	case 2:
 		//get recordID and allow modifications to acc details based on selected recordID
 		fmt.Println("----Modify Record----")
@@ -481,7 +483,7 @@ func manageRecordsMenu() {
 	case 4:
 		//search for record by academic year or keyword/capstone title
 		fmt.Println("----Query Record----")
-		queryRecordByKeyword()
+		queryRecord()
 	case 0:
 		// Go back
 	default:
@@ -489,8 +491,9 @@ func manageRecordsMenu() {
 	}
 }
 
-// admin create new capstone entry
-func adminCreateRecord() {
+// start of all capstone related features (both admin and users share common record functions)
+// create new capstone entry
+func createRecord() {
 	var record Record
 	reader := bufio.NewReader(os.Stdin)
 	reader.ReadString('\n')
@@ -617,7 +620,7 @@ func editRecord() {
 }
 
 // search for capstone entry based on academic year or keyword/capstone title
-func queryRecordByKeyword() {
+func queryRecord() {
 	var query string
 	reader := bufio.NewReader(os.Stdin)
 	reader.ReadString('\n')
