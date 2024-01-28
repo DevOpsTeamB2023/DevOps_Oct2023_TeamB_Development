@@ -1,5 +1,5 @@
 // account_test.go
-package account_test
+package test
 
 import (
 	"DevOps_Oct2023_TeamB_Development/microservices/account"
