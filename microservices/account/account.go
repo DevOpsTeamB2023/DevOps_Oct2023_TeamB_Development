@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,7 +28,23 @@ var (
 )
 
 func DB() {
-	db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
+	// for local mysql db
+	// db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// if err := db.Ping(); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println("Connected to the database")
+
+	// using jawsdb
+	// Use the JAWSDB_URL environment variable for the database connection
+	dbURL := os.Getenv("mysql://ysum1i4rdedliecp:myx84qukzwnznd9z@l6glqt8gsx37y4hs.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/ph0nqy9r1ze634i6")
+
+	db, err = sql.Open("mysql", dbURL)
 	if err != nil {
 		log.Fatal(err)
 	}
