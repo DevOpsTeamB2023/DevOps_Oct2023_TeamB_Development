@@ -82,7 +82,7 @@ func TestGetAccHandler(t *testing.T) {
 
 func TestApproveAccHandler(t *testing.T) {
 	// accID follows the existing acc with pending status in record_db for testing approval
-	accID := "2998"
+	accID := "2004"
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("/api/v1/accounts/approve?accID=%s", accID), nil)
 	if err != nil {
@@ -142,8 +142,8 @@ func TestAdminCreateAccHandler(t *testing.T) {
 }
 
 func TestDeleteAccHandler(t *testing.T) {
-	// accID follows existing account for deletion with AccID=2999 in record_db for testing deletion
-	accID := "2999"
+	// accID follows existing account for deletion with AccID=2003 in record_db for testing deletion
+	accID := "2003"
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/accounts/delete?accID=%s", accID), nil)
 	if err != nil {
@@ -167,8 +167,8 @@ func TestDeleteAccHandler(t *testing.T) {
 
 // not working - request not passing to account.go
 func TestUpdateAccHandler(t *testing.T) {
-	// accID follows existing account for update with AccID=2997 in record_db for testing update
-	accID := "2997"
+	// accID follows existing account for update with AccID=2005 in record_db for testing update
+	accID := "2005"
 
 	// Create a request with a JSON payload for updating the account
 	updatedAcc := account.Account{
