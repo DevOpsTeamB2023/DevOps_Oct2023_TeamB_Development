@@ -1,1 +1,1 @@
-web: cd console && go build -o myapp && ./myapp
+web: ./myapp
